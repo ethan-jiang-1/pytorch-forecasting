@@ -147,3 +147,9 @@ lightning_logs
 
 # data
 pytorch_forecasting/data/*.parquet
+
+# alive project at local
+optuna_test/
+lighting_logs/
+*.pkl
+.github
