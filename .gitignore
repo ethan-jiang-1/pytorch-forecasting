@@ -153,3 +153,5 @@ optuna_test/
 lighting_logs/
 *.pkl
 .github
+
+exam_*.*
