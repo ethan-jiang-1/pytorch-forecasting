@@ -73,6 +73,7 @@ class TftExec(object):
         if plot_res:
             fig = res.plot(show=True, suggest=True)
             fig.show()
+        return res.suggestion()
 
     @classmethod
     def train(cls, trainer, tft, train_dataloader, val_dataloader):
