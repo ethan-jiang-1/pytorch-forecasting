@@ -134,6 +134,19 @@ class DataExplorer(object):
             print("  ", key, "=", parameters[key], " / ", type(parameters[key]))
         print("")
 
+        print("##dataset.scalars:")
+        for sl in dataset.scalers:
+            print("  ", sl, dataset.scalers[sl])
+        print("##dataset.categorical_encoders")
+        for ce in dataset.categorical_encoders:
+            print("  ", ce, dataset.categorical_encoders[ce])
+
+        print("##(V)flat_categoricals")
+        print(dataset.flat_categoricals, len(dataset.flat_categoricals))
+        
+        print("##(V)reals")
+        print(dataset.reals, len(dataset.reals))
+
     @classmethod
     def explore_dataloader(cls, dataloader, name):
         writer = SummaryWriter()
