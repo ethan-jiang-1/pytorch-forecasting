@@ -68,7 +68,7 @@ class DataLoader(object):
     def get_training_dataset(cls, data):
         special_days = DataSrc.get_special_days()
 
-        training_cutoff = data["time_idx"].max() - 6
+        training_cutoff = data["time_idx"].max() -  cls.get_max_prediction_length()
         max_encoder_length = cls.get_max_encoder_length()
         max_prediction_length = cls.get_max_prediction_length()
 
@@ -77,14 +77,18 @@ class DataLoader(object):
             time_idx="time_idx",
             target="volume",
             group_ids=["agency", "sku"],
+
             min_encoder_length=max_encoder_length // 2,  # allow encoder lengths from 0 to max_prediction_length
             max_encoder_length=max_encoder_length,
+
             min_prediction_length=1,
             max_prediction_length=max_prediction_length,
+
             static_categoricals=["agency", "sku"],
             static_reals=["avg_population_2017", "avg_yearly_household_income_2017"],
-            time_varying_known_categoricals=["special_days", "month"],
             variable_groups={"special_days": special_days},  # group of categorical variables can be treated as one variable
+
+            time_varying_known_categoricals=["special_days", "month"],
             time_varying_known_reals=["time_idx", "price_regular", "discount_in_percent"],
             time_varying_unknown_categoricals=[],
             time_varying_unknown_reals=[
@@ -99,6 +103,7 @@ class DataLoader(object):
             target_normalizer=GroupNormalizer(
                 groups=["agency", "sku"], transformation="softplus", center=False
             ),  # use softplus with beta=1.0 and normalize by group
+
             add_relative_time_idx=True,
             add_target_scales=True,
             add_encoder_length=True,
