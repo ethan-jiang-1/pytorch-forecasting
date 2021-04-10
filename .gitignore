@@ -154,5 +154,6 @@ lighting_logs/
 *.pkl
 .github
 
+exam_*.*
 df_profiing_*.*
 
