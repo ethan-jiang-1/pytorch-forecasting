@@ -1,4 +1,5 @@
-from studies.ds_stallion import DataSrc, DataLoader
+from studies.ds_stallion import DataSrc
+from studies.dl_stallion import DataLoader
 from studies.tft_model import TftExec
 
 
