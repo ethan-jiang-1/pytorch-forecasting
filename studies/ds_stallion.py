@@ -1,5 +1,6 @@
 #from pathlib import Path
 #import pickle
+from os import uname
 import warnings
 
 import numpy as np
@@ -84,14 +85,42 @@ def profiling_dataframe_to_html(data):
     profile.to_file("df_profiing_stallion.html")
     return profile
 
-def explore_date(data):
-    print("##explore_date")
-    df_date = data["date"]
-    print(df_date)
-    desp = df_date.describe()
+def _explore_sd(df_sd):
+    print(df_sd)
+    desp = df_sd.describe()
     print(desp)
     print(desp.shape)
-    print("unique date no is", desp[1], " out of raw:", desp[0])    
+    unique_vals = []
+    for i in range(len(df_sd)):
+        if df_sd[i] not in unique_vals:
+            unique_vals.append(df_sd[i])
+    unique_vals = sorted(unique_vals)
+    return desp, unique_vals
+
+def explore_date(data):
+    print("##explore_date")
+    df_sd = data["date"]
+    desp, unique_vals = _explore_sd(df_sd)
+    print("unique date no is", desp[1], " out of raw:", desp[0])   
+    print("unique vals:", unique_vals) 
+    print("")
+
+def explore_sku(data):
+    print("##explore_sku")
+    df_sd = data["sku"]
+    desp, unique_vals = _explore_sd(df_sd)
+    print("unique sku no is", desp[1], " out of raw:", desp[0])    
+    print("unique vals", unique_vals)
+    print("") 
+
+def explore_agency(data):
+    print("##explore_date")
+    df_sd = data["agency"]
+    desp, unique_vals = _explore_sd(df_sd)
+    print("unique agency no is", desp[1], " out of raw:", desp[0])    
+    print("unique vals", unique_vals) 
+    print("")
+
 
 def explore_time_idx(data):
     print("##explore_time_idx")
@@ -111,8 +140,10 @@ def main():
     for cl in data.columns:
         print("  ", cl)
 
-    explore_date(data)
     explore_time_idx(data)
+    explore_date(data)
+    explore_sku(data)
+    explore_agency(data)
 
     profiling_dataframe_to_html(data)
 
