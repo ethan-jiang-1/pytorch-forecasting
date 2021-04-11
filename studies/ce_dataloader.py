@@ -40,22 +40,24 @@ class DataLoaderExplorer(object):
     
         for x0, x1 in iter(dataloader):
             if count == 0:
-                print("encoder_cat.shape", x0["encoder_cat"].shape)
-                print("encoder_cont.shape", x0["encoder_cont"].shape)
-                print("encoder_target.shape", x0["encoder_target"].shape)
-                print("encoder_lengths.shape", x0["encoder_lengths"].shape)
+                print("x0_dict:")
+                print("  encoder_cat.shape", x0["encoder_cat"].shape)
+                print("  encoder_cont.shape", x0["encoder_cont"].shape)
+                print("  encoder_target.shape", x0["encoder_target"].shape)
+                print("  encoder_lengths.shape", x0["encoder_lengths"].shape)
                 print("")
-                print("decoder_cat.shape", x0["decoder_cat"].shape)
-                print("decoder_cont.shape", x0["decoder_cont"].shape)
-                print("decoder_target.shape", x0["decoder_target"].shape)
-                print("decoder_lengths.shape", x0["decoder_lengths"].shape)
+                print("  decoder_cat.shape", x0["decoder_cat"].shape)
+                print("  decoder_cont.shape", x0["decoder_cont"].shape)
+                print("  decoder_target.shape", x0["decoder_target"].shape)
+                print("  decoder_lengths.shape", x0["decoder_lengths"].shape)
                 print("")
-                print("decoder_time_idx.shape", x0["decoder_time_idx"].shape)
-                print("groups.shape", x0["groups"].shape)
-                print("target_scale.shape", x0["target_scale"].shape)
+                print("  decoder_time_idx.shape", x0["decoder_time_idx"].shape)
+                print("  groups.shape", x0["groups"].shape)
+                print("  target_scale.shape", x0["target_scale"].shape)
 
-                print("x1_0.shape", x1[0].shape)
-                print("x1_1", None)
+                print("x1_turple(2):")
+                print("  x1_0.shape", x1[0].shape)
+                print("  x1_1", None)
             elif count == 1:
                 print("iterating dataloader...")
 
