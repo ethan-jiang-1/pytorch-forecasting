@@ -22,7 +22,7 @@ from pytorch_forecasting.data.examples import get_stallion_data
 warnings.simplefilter("error", category=SettingWithCopyWarning)
 warnings.simplefilter("ignore", category=FutureWarning)
 
-class DataSrc(object):
+class StlDataSrc(object):
     @classmethod
     def get_special_days(cls):
         special_days = [
@@ -76,26 +76,15 @@ class DataSrc(object):
         data[special_days] = data[special_days].apply(lambda x: x.map({0: "", 1: x.name})).astype("category")
         return data
 
+
 def profiling_dataframe_to_html(data):
-    generate_profiling = False
-    if not generate_profiling:
-        return None
-    from pandas_profiling import ProfileReport
-    profile = ProfileReport(data, title="Pandas Profiling Report")
-    profile.to_file("df_profiing_stallion.html")
-    return profile
+    from studies.ce_datasrc import DataSrcExplorer
+    return DataSrcExplorer.profiling_dataframe_to_html(data, "df_profiing_stallion.html")
 
 def _explore_sd(df_sd):
-    print(df_sd)
-    desp = df_sd.describe()
-    print(desp)
-    print(desp.shape)
-    unique_vals = []
-    for i in range(len(df_sd)):
-        if df_sd[i] not in unique_vals:
-            unique_vals.append(df_sd[i])
-    unique_vals = sorted(unique_vals)
-    return desp, unique_vals
+    from studies.ce_datasrc import DataSrcExplorer
+    return DataSrcExplorer.explore_single_df(df_sd)
+
 
 def explore_date(data):
     print("##explore_date")
@@ -121,7 +110,6 @@ def explore_agency(data):
     print("unique vals", unique_vals) 
     print("")
 
-
 def explore_time_idx(data):
     print("##explore_time_idx")
     print("time_idx.max", data["time_idx"].max())
@@ -132,7 +120,7 @@ def explore_time_idx(data):
     print("")
 
 def main():
-    data = DataSrc.get_df_data()
+    data = StlDataSrc.get_df_data()
     print(data)
     print(data.describe())
 

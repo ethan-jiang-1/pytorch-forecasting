@@ -11,21 +11,21 @@ from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 #from pytorch_lightning.loggers import TensorBoardLogger
 #import torch
 
-from pytorch_forecasting import GroupNormalizer, TemporalFusionTransformer, TimeSeriesDataSet
+from pytorch_forecasting import TemporalFusionTransformer 
 import pytorch_forecasting
 from pytorch_forecasting.data.examples import get_stallion_data
-from pytorch_forecasting.metrics import MAE, RMSE, SMAPE, PoissonLoss, QuantileLoss
+from pytorch_forecasting.metrics import QuantileLoss
 from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
-from pytorch_forecasting.utils import profile
+#from pytorch_forecasting.utils import profile
 
 
-class TftExec(object):
+class StlTftExec(object):
     @classmethod 
     def get_trainer(cls, max_epochs=100):
         early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
         lr_logger = LearningRateMonitor()
 
-        xtrainer = pl.Trainer(
+        trainer = pl.Trainer(
             max_epochs=max_epochs,
             gpus=0,
             weights_summary="top",
@@ -38,7 +38,7 @@ class TftExec(object):
             # profiler=True,
             callbacks=[lr_logger, early_stop_callback],
         )
-        return xtrainer
+        return trainer
 
     @classmethod
     def get_tft_model(cls, training):
@@ -115,120 +115,38 @@ class TftExec(object):
             pickle.dump(study, fout)
         return study
 
-class TftProfile(object):
-    @classmethod
-    def profile_training(cls, trainer, tft, train_dataloader, val_dataloader):
-        #profile speed
-        profile(
-            trainer.fit,
-            profile_fname="profile.prof",
-            model=tft,
-            period=0.001,
-            filter="pytorch_forecasting",
-            train_dataloader=train_dataloader,
-            val_dataloaders=val_dataloader,
-        )
-
-class TftExplorer(object):
-    @classmethod
-    def explore_tft_from_dataset_new_kwargs(cls, new_kwargs):
-        print("##TftExplorer.explore_tft_from_dataset_new_kwargs")
-        for key in new_kwargs.keys():
-            print("  ", key, "\t", new_kwargs[key])
-        print("")
-        print("key vals:")
-        embedding_labels = new_kwargs["embedding_labels"]
-        print("embedding_labels", len(embedding_labels.keys()))
-        for i, key in enumerate(embedding_labels.keys()):
-            print("  [{}]".format(i), key, "", embedding_labels[key])
-        print("")
-        print("time_varying_reals_encoder", len(new_kwargs["time_varying_reals_encoder"]))
-        print(" ", new_kwargs["time_varying_reals_encoder"])
-
-        x_reals = new_kwargs["x_reals"]
-        print("x_reals", len(x_reals))
-        for key in x_reals:
-            print("  ", key)
-
-        x_categoricals = new_kwargs["x_categoricals"]
-        print("x_reals", len(x_categoricals))
-        for key in x_categoricals:
-            print("  ", key)    
-
-        print("")
-
-    @classmethod
-    def explore_tft_inputs(cls, dataset, dataloader):
-        from studies.dl_stallion import DataExplorer
-        if hasattr(dataset, "hack_from_dataset_new_kwargs"):
-            print("##TftExplorer.explore_tft_inputs")
-            new_kwargs = dataset.hack_from_dataset_new_kwargs    
-
-            x_categoricals = new_kwargs["x_categoricals"]
-            print("x_categoricals (encoder_cat?)", len(x_categoricals))
-            for i, key in enumerate(x_categoricals):
-                print("  ", i, key)
-            print("")
-
-            time_varying_reals_encoder = new_kwargs["time_varying_reals_encoder"]  
-            x_reals = new_kwargs["x_reals"]
-            print("x_reals (encoder_cont?)", len(x_reals))
-            for i, key in enumerate(x_reals):
-                unknown = False
-                if key in time_varying_reals_encoder:
-                    unknown = True
-                if unknown:
-                    print("  ?",i, key)                
-                else:
-                    print("  !",i, key)
-            print("") 
-
-            time_varying_reals_encoder = new_kwargs["time_varying_reals_encoder"]  
-            print("time_varying_reals_encoder", len(time_varying_reals_encoder))
-            for key in time_varying_reals_encoder:
-                print("  ", key)
-            print("")
-
-            time_varying_reals_decoder = new_kwargs["time_varying_reals_decoder"]  
-            print("time_varying_reals_decoder", len(time_varying_reals_decoder))
-            for key in time_varying_reals_decoder:
-                print("  ", key)
-            print("")
-
-            DataExplorer.explore_dataloader(dataloader, "train")
-    
 def main():
 
-    from studies.ds_stallion import DataSrc
-    from studies.dl_stallion import DataLoader
-    from studies.tft_model import TftExec
+    from studies.stl_datasrc import StlDataSrc
+    from studies.stl_dataloader import StlDataLoader
+    from studies.ce_tft import TftExplorer
 
     print(pytorch_forecasting.__version__)
 
-    data = DataSrc.get_df_data()
+    data = StlDataSrc.get_df_data()
     print(data)
 
-    training = DataLoader.get_training_dataset(data)
-    validation = DataLoader.get_validation_dataset(training, data)
+    training = StlDataLoader.get_training_dataset(data)
+    validation = StlDataLoader.get_validation_dataset(training, data)
 
-    train_dataloader, val_dataloader = DataLoader.get_dataloaders(training, validation)
+    train_dataloader, val_dataloader = StlDataLoader.get_dataloaders(training, validation)
 
-    trainer = TftExec.get_trainer(max_epochs=3)
-    tft = TftExec.get_tft_model(training)
+    trainer = StlTftExec.get_trainer(max_epochs=3)
+    tft = StlTftExec.get_tft_model(training)
     if hasattr(training, "hack_from_dataset_new_kwargs"):
         #new_kwargs = training.hack_from_dataset_new_kwargs
         #TftExplorer.explore_tft_from_dataset_new_kwargs(new_kwargs)
 
         TftExplorer.explore_tft_inputs(training, train_dataloader)
 
-    exec_train_and_pred = False
+    exec_train_and_pred = True
     if exec_train_and_pred:
-        TftExec.find_init_lr(trainer, tft, train_dataloader, val_dataloader)
-        TftExec.train(trainer, tft, train_dataloader, val_dataloader)
-        study = TftExec.turn_hyperparameters(train_dataloader, val_dataloader, n_trials=2, max_epochs=2)
+        StlTftExec.find_init_lr(trainer, tft, train_dataloader, val_dataloader)
+        StlTftExec.train(trainer, tft, train_dataloader, val_dataloader)
+        study = StlTftExec.turn_hyperparameters(train_dataloader, val_dataloader, n_trials=2, max_epochs=2)
         print(study)
 
-        preds, index = TftExec.predict(tft, val_dataloader)
+        preds, index = StlTftExec.predict(tft, val_dataloader)
         print(preds)
         print(index)
 
