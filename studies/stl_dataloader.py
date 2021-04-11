@@ -23,41 +23,13 @@ from torch.utils.tensorboard import SummaryWriter
 from studies.stl_datasrc import StlDataSrc
 
 class StlDataLoader(object):
-    c_max_encoder_length = 36
-    c_max_prediction_length = 6
-    c_batch_size = 64
-
     @classmethod
-    def get_max_encoder_length(cls):
-        return cls.c_max_encoder_length
-
-    @classmethod
-    def set_max_encoder_length(cls, max_encoder_length):
-        cls.c_max_encoder_length = max_encoder_length
-
-    @classmethod
-    def get_max_prediction_length(cls):
-        return cls.c_max_prediction_length
-
-    @classmethod
-    def set_max_prediction_length(cls, max_prediction_length):
-        cls.c_max_prediction_length = max_prediction_length
-
-    @classmethod
-    def get_batch_size(cls):
-        return cls.c_batch_size
-
-    @classmethod
-    def set_batch_size(cls, batch_size):
-        cls.c_batch_size = batch_size
-
-    @classmethod
-    def get_training_dataset(cls, data):
+    def get_training_dataset(cls, hp, data):
         special_days = StlDataSrc.get_special_days()
 
-        training_cutoff = data["time_idx"].max() - cls.get_max_prediction_length()
-        max_encoder_length = cls.get_max_encoder_length()
-        max_prediction_length = cls.get_max_prediction_length()
+        training_cutoff = data["time_idx"].max() - hp.MAX_PREDICTION_LENGTH
+        max_encoder_length = hp.MAX_ENCODER_LENGTH
+        max_prediction_length = hp.MAX_PREDICTION_LENGTH
 
         training = TimeSeriesDataSet(
             data[lambda x: x.time_idx <= training_cutoff],
@@ -106,17 +78,17 @@ class StlDataLoader(object):
         return validation
 
     @classmethod
-    def get_dataloaders(cls, training, validation):
+    def get_dataloaders(cls, hp, training, validation):
         #validation = TimeSeriesDataSet.from_dataset(training, data, predict=True, stop_randomization=True)
-        batch_size = cls.get_batch_size()
+        batch_size = hp.BATCH_SIZE
         train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=0)
         val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size, num_workers=0)
         return train_dataloader, val_dataloader
 
     @classmethod
-    def save_datasets(cls, data):
-        training = cls.get_training_dataset(data)
-        validation = cls.get_validation_dataset(training, data)
+    def save_datasets(cls, hp, data):
+        training = cls.get_training_dataset(hp, data)
+        validation = cls.get_validation_dataset(training, hp, data)
 
         # save datasets
         training.save("training.pkl")
@@ -124,17 +96,21 @@ class StlDataLoader(object):
 
 
 def main():
+    from studies.ce_hyperparameters import HyperParameters
     from studies.ce_dataloader import DataLoaderExplorer
+
+    hp = HyperParameters()
+
     data = StlDataSrc.get_df_data()
     print(data)
     print(data.describe())
 
-    training = StlDataLoader.get_training_dataset(data)
+    training = StlDataLoader.get_training_dataset(hp, data)
     validation = StlDataLoader.get_validation_dataset(training, data)
 
     DataLoaderExplorer.explore_dataset(validation, "validation")
 
-    train_dataloader, val_dataloader = StlDataLoader.get_dataloaders(training, validation)
+    train_dataloader, val_dataloader = StlDataLoader.get_dataloaders(hp, training, validation)
     print(train_dataloader)
     print(val_dataloader)
 

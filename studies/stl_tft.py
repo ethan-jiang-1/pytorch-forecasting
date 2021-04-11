@@ -53,15 +53,17 @@ class StlTftExec(object):
         return trainer
 
     @classmethod
-    def get_tft_model(cls, training, dhp):
+    def get_tft_model(cls, hp, training,):
         qtloss = QuantileLoss()
         tft = TemporalFusionTransformer.from_dataset(
             training,
-            learning_rate=0.03,
-            hidden_size=16,
-            attention_head_size=1,
-            dropout=0.1,
-            hidden_continuous_size=8,
+
+            learning_rate=hp.learning_rate,
+            hidden_size=hp.hidden_size,
+            attention_head_size=hp.attention_head_size,
+            dropout=hp.dropout,
+            hidden_continuous_size=hp.hidden_continuous_size,
+
             output_size=7,  # 7 quantiles by default ?
             loss=qtloss,
             log_interval=10,
@@ -133,22 +135,22 @@ def main():
     from studies.stl_datasrc import StlDataSrc
     from studies.stl_dataloader import StlDataLoader
     from studies.ce_tft import TftExplorer
-    from studies.ce_common import HyperParameters
+    from studies.ce_hyperparameters import HyperParameters
 
-    dhp = HyperParameters()
+    hp = HyperParameters()
 
     print(pytorch_forecasting.__version__)
 
     data = StlDataSrc.get_df_data()
     print(data)
 
-    training = StlDataLoader.get_training_dataset(data)
+    training = StlDataLoader.get_training_dataset(hp, data)
     validation = StlDataLoader.get_validation_dataset(training, data)
 
-    train_dataloader, val_dataloader = StlDataLoader.get_dataloaders(training, validation)
+    train_dataloader, val_dataloader = StlDataLoader.get_dataloaders(hp, training, validation)
 
-    trainer = StlTftExec.get_trainer(dhp, max_epochs=3)
-    tft = StlTftExec.get_tft_model(training, dhp)
+    trainer = StlTftExec.get_trainer(hp, max_epochs=3)
+    tft = StlTftExec.get_tft_model(hp, training)
     if hasattr(training, "hack_from_dataset_new_kwargs"):
         #new_kwargs = training.hack_from_dataset_new_kwargs
         #TftExplorer.explore_tft_from_dataset_new_kwargs(new_kwargs)
