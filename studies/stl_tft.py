@@ -79,11 +79,12 @@ class StlTftExec(object):
 
     @classmethod
     def train(cls, trainer, tft, train_dataloader, val_dataloader):
-        trainer.fit(
+        ret = trainer.fit(
             tft,
             train_dataloader=train_dataloader,
             val_dataloaders=val_dataloader,
         )
+        return ret
 
     @classmethod
     def predict(cls, tft, val_dataloader):
