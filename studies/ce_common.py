@@ -31,10 +31,9 @@ class CeInspect(object):
             key_cp = "{}".format(key)
             try:
                 lc0, lc1 = key_cp[0], key_cp[1]
-                if (lc0 >= 'A' and lc0 <= 'Z') and \
-                   (lc1 >= 'A' and lc1 <= 'Z'):
-                    obj = eval(key)
+                if (lc0 >= 'A' and lc0 <= 'Z') and (lc1 >= 'A' and lc1 <= 'Z'):
+                    obj = lcs[key]
                     if isinstance(obj, bool) or isinstance(obj, int) or isinstance(obj, float):
                         print(key, "\t", obj)
-            except:
-                pass
+            except Exception as ex:
+                print("exception occured", ex)
