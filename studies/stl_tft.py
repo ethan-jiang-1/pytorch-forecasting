@@ -25,8 +25,6 @@ class StlTftExec(object):
         early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
         lr_logger = LearningRateMonitor()
 
-        gradient_clip_val = hp.get_exist_val("gradient_clip_val", 0.1)
-
         trainer = pl.Trainer(
             gpus=gpus,
 
@@ -42,7 +40,7 @@ class StlTftExec(object):
             progress_bar_refresh_rate=20,
 
             #hyperparameter
-            gradient_clip_val=gradient_clip_val,
+            gradient_clip_val=hp.gradient_clip_val,
             #weights_summary="top",
             #limit_train_batches=30,
             # val_check_interval=20,
