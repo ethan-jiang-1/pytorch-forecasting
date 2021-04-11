@@ -21,16 +21,30 @@ from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimi
 
 class StlTftExec(object):
     @classmethod 
-    def get_trainer(cls, max_epochs=100):
+    def get_trainer(cls, hp, gpus=0, min_epochs=2, max_epochs=40, resume_from_checkpoint=None, root_dir=".", tb_logger=None):
         early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
         lr_logger = LearningRateMonitor()
 
+        gradient_clip_val = hp.get_exist_val("gradient_clip_val", 0.1)
+
         trainer = pl.Trainer(
-            max_epochs=max_epochs,
-            gpus=0,
-            weights_summary="top",
-            gradient_clip_val=0.1,
-            limit_train_batches=30,
+            gpus=gpus,
+
+            min_epochs=min_epochs,
+            max_epochs=max_epochs,  # 40, #ethan
+            default_root_dir=root_dir,
+            weights_save_path=root_dir,
+            #profiler="advanced",
+            resume_from_checkpoint=resume_from_checkpoint,
+            #logger=tb_logger,
+
+            flush_logs_every_n_steps=20,
+            progress_bar_refresh_rate=20,
+
+            #hyperparameter
+            gradient_clip_val=gradient_clip_val,
+            #weights_summary="top",
+            #limit_train_batches=30,
             # val_check_interval=20,
             # limit_val_batches=1,
             # fast_dev_run=True,
@@ -41,7 +55,7 @@ class StlTftExec(object):
         return trainer
 
     @classmethod
-    def get_tft_model(cls, training):
+    def get_tft_model(cls, training, dhp):
         qtloss = QuantileLoss()
         tft = TemporalFusionTransformer.from_dataset(
             training,
@@ -121,6 +135,9 @@ def main():
     from studies.stl_datasrc import StlDataSrc
     from studies.stl_dataloader import StlDataLoader
     from studies.ce_tft import TftExplorer
+    from studies.ce_common import HyperParameters
+
+    dhp = HyperParameters()
 
     print(pytorch_forecasting.__version__)
 
@@ -132,8 +149,8 @@ def main():
 
     train_dataloader, val_dataloader = StlDataLoader.get_dataloaders(training, validation)
 
-    trainer = StlTftExec.get_trainer(max_epochs=3)
-    tft = StlTftExec.get_tft_model(training)
+    trainer = StlTftExec.get_trainer(dhp, max_epochs=3)
+    tft = StlTftExec.get_tft_model(training, dhp)
     if hasattr(training, "hack_from_dataset_new_kwargs"):
         #new_kwargs = training.hack_from_dataset_new_kwargs
         #TftExplorer.explore_tft_from_dataset_new_kwargs(new_kwargs)
