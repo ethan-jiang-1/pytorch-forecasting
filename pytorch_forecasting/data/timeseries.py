@@ -1777,10 +1777,14 @@ class TimeSeriesDataSet(Dataset):
             del kwargs["shuffle"]
             del kwargs["drop_last"]
 
-        return DataLoader(
-            self,
-            **kwargs,
-        )
+        # hacked by ethan
+        #return DataLoader(
+        #    self,
+        #    **kwargs,
+        #)
+        dl = DataLoader(self, **kwargs)
+        dl.hack_to_dataset_kwargs = kwargs
+        return dl
 
     def x_to_index(self, x: Dict[str, torch.Tensor]) -> pd.DataFrame:
         """

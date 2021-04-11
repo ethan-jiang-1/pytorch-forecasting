@@ -178,7 +178,13 @@ class DataExplorer(object):
 
                 print("x1_0.shape", x1[0].shape)
                 print("x1_1", None)
+            elif count == 1:
+                print("iterating dataloader...")
 
+            if count % 10 == 0:
+                import sys
+                sys.stdout.write("...{}...\r".format(count))
+                sys.stdout.flush()
             count += 1
             examples += x1[0].shape[0]
 
