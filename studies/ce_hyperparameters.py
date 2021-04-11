@@ -1,7 +1,7 @@
 import inspect
 import collections
 
-class DefaultHyperParameters(object):
+class DefaultHyperParametersStl(object):
     MAX_ENCODER_LENGTH = 24
     MAX_PREDICTION_LENGTH = 6
     BATCH_SIZE = 64
@@ -12,6 +12,9 @@ class DefaultHyperParameters(object):
     hidden_continuous_size = 29
     attention_head_size = 1
     learning_rate = 0.009 
+
+
+DefaultHyperParameters = DefaultHyperParametersStl
 
 
 class HyperParameters(collections.OrderedDict):
