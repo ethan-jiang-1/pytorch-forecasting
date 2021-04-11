@@ -141,11 +141,15 @@ class DataExplorer(object):
         for ce in dataset.categorical_encoders:
             print("  ", ce, dataset.categorical_encoders[ce])
 
-        print("##(V)flat_categoricals")
-        print(dataset.flat_categoricals, len(dataset.flat_categoricals))
+        print("")
+        print("##(V)flat_categoricals", len(dataset.flat_categoricals))
+        for fc in dataset.flat_categoricals:
+            print("  ", fc)
         
-        print("##(V)reals")
-        print(dataset.reals, len(dataset.reals))
+        print("")
+        print("##(V)reals:", len(dataset.reals))
+        for rl in dataset.reals:
+            print("  ", rl)
 
     @classmethod
     def explore_dataloader(cls, dataloader, name):
