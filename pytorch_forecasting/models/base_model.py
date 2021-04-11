@@ -1221,6 +1221,8 @@ class BaseModelWithCovariates(BaseModel):
             categorical_groups=dataset.variable_groups,
         )
         new_kwargs.update(kwargs)
+        #hacking: by ethan
+        dataset.hack_from_dataset_new_kwargs = new_kwargs
         return super().from_dataset(dataset, **new_kwargs)
 
     def calculate_prediction_actual_by_variable(

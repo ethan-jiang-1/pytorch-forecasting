@@ -127,27 +127,27 @@ class DataExplorer(object):
     @classmethod
     def explore_dataset(cls, dataset, name):
         print("")
-        print("inspect_dataloader", name)
+        print("##DataExplorer.explore_dataset", name)
         parameters = dataset.get_parameters()
         print("dataset {} parameters".format(name))
         for key in parameters.keys():
             print("  ", key, "=", parameters[key], " / ", type(parameters[key]))
         print("")
 
-        print("##dataset.scalars:")
+        print("*dataset.scalars:")
         for sl in dataset.scalers:
             print("  ", sl, dataset.scalers[sl])
-        print("##dataset.categorical_encoders")
+        print("*dataset.categorical_encoders")
         for ce in dataset.categorical_encoders:
             print("  ", ce, dataset.categorical_encoders[ce])
 
         print("")
-        print("##(V)flat_categoricals", len(dataset.flat_categoricals))
+        print("*(V)flat_categoricals", len(dataset.flat_categoricals))
         for fc in dataset.flat_categoricals:
             print("  ", fc)
         
         print("")
-        print("##(V)reals:", len(dataset.reals))
+        print("*(V)reals:", len(dataset.reals))
         for rl in dataset.reals:
             print("  ", rl)
 
@@ -158,7 +158,7 @@ class DataExplorer(object):
         count = 0
         examples = 0
         print("")
-        print("inspect_dataloader", name)
+        print("##DataExplorer.explore_dataloader", name)
     
         for x0, x1 in iter(dataloader):
             if count == 0:
