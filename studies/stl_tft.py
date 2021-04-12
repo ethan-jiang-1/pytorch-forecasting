@@ -84,7 +84,7 @@ class StlTftExec(object):
             tft, train_dataloader=train_dataloader, val_dataloaders=val_dataloader, min_lr=1e-5, max_lr=1e2
         )
         print(f"suggested learning rate: {res.suggestion()}")
-        tft.hparams.learning_rate = res.suggestion()
+        # tft.hparams.learning_rate = res.suggestion()
 
         if plot_res:
             fig = res.plot(show=True, suggest=True)
