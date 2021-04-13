@@ -81,8 +81,11 @@ class StlTftExec(object):
         trainer.limit_train_batches = 1.0
         # run learning rate finder
         res = trainer.tuner.lr_find(
-            tft, train_dataloader=train_dataloader, val_dataloaders=val_dataloader, min_lr=1e-5, max_lr=1e2
-        )
+            tft, 
+            train_dataloader=train_dataloader, 
+            val_dataloaders=val_dataloader, 
+            min_lr=1e-5, 
+            max_lr=1e2)
         print(f"suggested learning rate: {res.suggestion()}")
         # tft.hparams.learning_rate = res.suggestion()
 
@@ -138,6 +141,7 @@ def main():
     from studies.ce_hyperparameters import HyperParameters
 
     hp = HyperParameters()
+    print(hp)
 
     print(pytorch_forecasting.__version__)
 
@@ -155,11 +159,17 @@ def main():
         #new_kwargs = training.hack_from_dataset_new_kwargs
         #TftExplorer.explore_tft_from_dataset_new_kwargs(new_kwargs)
 
-        TftExplorer.explore_tft_inputs(training, train_dataloader)
+        opt_explore_tft_inputs = False
+        if opt_explore_tft_inputs:
+            TftExplorer.explore_tft_inputs(training, train_dataloader)
 
-    exec_train_and_pred = True
-    if exec_train_and_pred:
-        StlTftExec.find_init_lr(trainer, tft, train_dataloader, val_dataloader)
+    opt_find_init_lr = False
+    if opt_find_init_lr:
+        trainer_lr = StlTftExec.get_trainer(hp, max_epochs=1)
+        StlTftExec.find_init_lr(trainer_lr, tft, train_dataloader, val_dataloader)
+
+    opt_exec_train_and_pred = True
+    if opt_exec_train_and_pred:
         StlTftExec.train(trainer, tft, train_dataloader, val_dataloader)
         study = StlTftExec.turn_hyperparameters(train_dataloader, val_dataloader, n_trials=2, max_epochs=2)
         print(study)

@@ -38,9 +38,9 @@ class HyperParameters(collections.OrderedDict):
     
     def __str__(self) -> str:
         output = ""
-        for name in self:
+        for name in sorted(self.keys()):
             output += "{}={}\n".format(name, self[name])
-        for name in dir(DefaultHyperParameters):
+        for name in sorted(dir(DefaultHyperParameters)):
             if not name.startswith("_"):
                 if name not in self:
                     output += "  {}={}\n".format(name, getattr(DefaultHyperParameters, name))
