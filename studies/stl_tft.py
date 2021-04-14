@@ -22,16 +22,17 @@ import os
 
 #from pytorch_forecasting.utils import profile
 
-class MyMonitor(Callback):
+
+class MyMetricsCallback(Callback):
+    """PyTorch Lightning metric callback."""
+
     def __init__(self):
-        super(MyMonitor, self).__init__()
-        pass
+        super().__init__()
+        self.metrics = []
 
-    def on_train_epoch_start(self, trainer, *args, **kwargs):
-        pass
+    def on_validation_end(self, trainer, pl_module):
+        self.metrics.append(trainer.callback_metrics)
 
-    def on_train_epoch_end(self, trainer, *args, **kwargs):
-        pass
 
 class MyTbLogger(TensorBoardLogger):
     def __init__(self,         
@@ -56,20 +57,29 @@ class MyTbLogger(TensorBoardLogger):
 
 
 class StlTftExec(object):
+    mcb = None
+
     @classmethod
-    def get_tb_logger(cls):
-        file_dir = os.path.dirname(__file__)
-        app_dir = os.path.dirname(file_dir)
-        log_dir = app_dir + "/lightning_logs"
+    def get_tb_logger(cls,  log_dir=None):
+        if log_dir is None:
+            file_dir = os.path.dirname(__file__)
+            app_dir = os.path.dirname(file_dir)
+            log_dir = app_dir + "/lightning_logs"
         tb_logger = MyTbLogger(log_dir)
         return tb_logger
+
+    @classmethod
+    def get_metrics_monitor(cls):
+        if cls.mcb is not None:
+            return cls.mcb
+        cls.mcb = MyMetricsCallback()
+        return cls.mcb
 
     @classmethod 
     def get_trainer(cls, hp, gpus=0, min_epochs=2, max_epochs=40, resume_from_checkpoint=None, root_dir=".", tb_logger=None):
         early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
         lr_logger = LearningRateMonitor()
-        my_monitor = MyMonitor()
-
+        my_monitor = cls.get_metrics_monitor()
         tb_logger = cls.get_tb_logger()
 
         trainer = pl.Trainer(
@@ -158,28 +168,6 @@ class StlTftExec(object):
         preds, index = tft.predict(val_dataloader, return_index=True, fast_dev_run=True)
         return preds, index
 
-    @classmethod
-    def turn_hyperparameters(cls, train_dataloader, val_dataloader, n_trials=200, max_epochs=50):
-        # tune
-        study = optimize_hyperparameters(
-            train_dataloader,
-            val_dataloader,
-            model_path="optuna_test",
-            n_trials=n_trials,
-            max_epochs=max_epochs,
-            gradient_clip_val_range=(0.01, 1.0),
-            hidden_size_range=(8, 128),
-            hidden_continuous_size_range=(8, 128),
-            attention_head_size_range=(1, 4),
-            learning_rate_range=(0.001, 0.1),
-            dropout_range=(0.1, 0.3),
-            trainer_kwargs=dict(limit_train_batches=30),
-            reduce_on_plateau_patience=4,
-            use_learning_rate_finder=False)
-
-        with open("test_study.pkl", "wb") as fout:
-            pickle.dump(study, fout)
-        return study
 
 def main():
 
@@ -229,11 +217,6 @@ def main():
     opt_exec_train_and_pred = True
     if opt_exec_train_and_pred:
         StlTftExec.train(trainer, tft, train_dataloader, val_dataloader)
-
-    opt_optimize_hyperparameters = False
-    if opt_optimize_hyperparameters:
-        study = StlTftExec.turn_hyperparameters(train_dataloader, val_dataloader, n_trials=2, max_epochs=2)
-        print(study)
 
     preds, index = StlTftExec.predict(tft, val_dataloader)
     print(preds)
