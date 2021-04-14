@@ -75,6 +75,10 @@ class StlTftExec(object):
         cls.mcb = MyMetricsCallback()
         return cls.mcb
 
+    @classmethod
+    def get_resume_from_checkpoint(cls):
+        return None
+
     @classmethod 
     def get_trainer(cls, hp, gpus=0, min_epochs=2, max_epochs=40, resume_from_checkpoint=None, root_dir=".", tb_logger=None):
         early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
