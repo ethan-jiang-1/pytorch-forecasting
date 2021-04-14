@@ -58,20 +58,22 @@ class MyTbLogger(TensorBoardLogger):
 
 class StlTftExec(object):
     mcb = None
+    log_dir = None
 
     @classmethod 
-    def get_tb_dir(cls):
-        file_dir = os.path.dirname(__file__)
-        app_dir = os.path.dirname(file_dir)
-        log_dir = app_dir + "/lightning_logs"
-        if not os.path.isdir(log_dir):
-            os.makedirs(log_dir, exist_ok=True)
-        print("**tb_log dir location:", log_dir)
-        return log_dir
+    def get_tb_log_dir(cls):
+        if cls.log_dir is None:
+            file_dir = os.path.dirname(__file__)
+            app_dir = os.path.dirname(file_dir)
+            cls.log_dir = app_dir + "/lightning_logs"
+            if not os.path.isdir(cls.log_dir):
+                os.makedirs(cls.log_dir, exist_ok=True)
+            print("**tb_log_dir location:", cls.log_dir)
+        return cls.log_dir
 
     @classmethod
     def get_tb_logger(cls):
-        log_dir = cls.get_tb_dir()
+        log_dir = cls.get_tb_log_dir()
         tb_logger = MyTbLogger(log_dir)
         return tb_logger
 
