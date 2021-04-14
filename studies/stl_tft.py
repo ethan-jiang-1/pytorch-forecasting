@@ -8,22 +8,69 @@ from pytorch_forecasting.models.nn import embeddings
 #from pandas.core.common import SettingWithCopyWarning
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
-#from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.loggers import TensorBoardLogger
 #import torch
 
 from pytorch_forecasting import TemporalFusionTransformer 
 import pytorch_forecasting
-from pytorch_forecasting.data.examples import get_stallion_data
+#from pytorch_forecasting.data.examples import get_stallion_data
 from pytorch_forecasting.metrics import QuantileLoss
 from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
+from pytorch_lightning.core.memory import ModelSummary
+from pytorch_lightning.callbacks.base import Callback
+import os
+
 #from pytorch_forecasting.utils import profile
+
+class MyMonitor(Callback):
+    def __init__(self):
+        super(MyMonitor, self).__init__()
+        pass
+
+    def on_train_epoch_start(self, trainer, *args, **kwargs):
+        pass
+
+    def on_train_epoch_end(self, trainer, *args, **kwargs):
+        pass
+
+class MyTbLogger(TensorBoardLogger):
+    def __init__(self,         
+                save_dir: str,
+                name = "default",
+                version = None,
+                log_graph = False,
+                default_hp_metric =True,
+                prefix = '',
+                **kwargs):
+        super(MyTbLogger, self).__init__(save_dir, name=name, version=version, log_graph=log_graph, default_hp_metric=default_hp_metric, prefix=prefix, **kwargs)
+
+    def log_hyperparams(self, params, metrics=None):
+        return super(MyTbLogger, self).log_hyperparams(params, metrics=metrics)
+
+    def log_metrics(self, metrics, step=None):
+        if 'val_loss' in metrics:
+            print(' val_loss:{:.2f}'.format(metrics['val_loss']))
+        if 'loss' in metrics:
+            print(" loss:{:.2f}".format(metrics['loss']))
+        return super(MyTbLogger, self).log_metrics(metrics, step=step)
 
 
 class StlTftExec(object):
+    @classmethod
+    def get_tb_logger(cls):
+        file_dir = os.path.dirname(__file__)
+        app_dir = os.path.dirname(file_dir)
+        log_dir = app_dir + "/lightning_logs"
+        tb_logger = MyTbLogger(log_dir)
+        return tb_logger
+
     @classmethod 
     def get_trainer(cls, hp, gpus=0, min_epochs=2, max_epochs=40, resume_from_checkpoint=None, root_dir=".", tb_logger=None):
         early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
         lr_logger = LearningRateMonitor()
+        my_monitor = MyMonitor()
+
+        tb_logger = cls.get_tb_logger()
 
         trainer = pl.Trainer(
             gpus=gpus,
@@ -34,10 +81,10 @@ class StlTftExec(object):
             weights_save_path=root_dir,
             #profiler="advanced",
             resume_from_checkpoint=resume_from_checkpoint,
-            #logger=tb_logger,
+            logger=tb_logger,
 
-            flush_logs_every_n_steps=20,
-            progress_bar_refresh_rate=20,
+            #flush_logs_every_n_steps=20,
+            #progress_bar_refresh_rate=20,
 
             #hyperparameter
             gradient_clip_val=hp.gradient_clip_val,
@@ -48,7 +95,7 @@ class StlTftExec(object):
             # fast_dev_run=True,
             # logger=logger,
             # profiler=True,
-            callbacks=[lr_logger, early_stop_callback],
+            callbacks=[lr_logger, early_stop_callback, my_monitor],
         )
         return trainer
 
@@ -96,6 +143,8 @@ class StlTftExec(object):
 
     @classmethod
     def train(cls, trainer, tft, train_dataloader, val_dataloader):
+        print("Trainer.max_epochs", trainer.max_epochs)
+        print("Trainer.min_epochs", trainer.min_epochs)
         ret = trainer.fit(
             tft,
             train_dataloader=train_dataloader,
@@ -126,8 +175,7 @@ class StlTftExec(object):
             dropout_range=(0.1, 0.3),
             trainer_kwargs=dict(limit_train_batches=30),
             reduce_on_plateau_patience=4,
-            use_learning_rate_finder=False,
-        )
+            use_learning_rate_finder=False)
 
         with open("test_study.pkl", "wb") as fout:
             pickle.dump(study, fout)
@@ -153,11 +201,21 @@ def main():
 
     train_dataloader, val_dataloader = StlDataLoader.get_dataloaders(hp, training, validation)
 
-    trainer = StlTftExec.get_trainer(hp, max_epochs=3)
+    trainer = StlTftExec.get_trainer(hp, max_epochs=2)
     tft = StlTftExec.get_tft_model(hp, training)
+
+    sum = ModelSummary(tft)
+    print("\ntft.summary")
+    print(sum)
+    print("\ntft.hparams")
+    print(tft.hparams)
+
     if hasattr(training, "hack_from_dataset_new_kwargs"):
-        #new_kwargs = training.hack_from_dataset_new_kwargs
-        #TftExplorer.explore_tft_from_dataset_new_kwargs(new_kwargs)
+        opt_explore_tft_from_dataset = False
+        if opt_explore_tft_from_dataset:
+            if hasattr(training, "hack_from_dataset_new_kwargs"):
+                new_kwargs = training.hack_from_dataset_new_kwargs
+                TftExplorer.explore_tft_from_dataset_new_kwargs(new_kwargs)
 
         opt_explore_tft_inputs = False
         if opt_explore_tft_inputs:
@@ -171,12 +229,15 @@ def main():
     opt_exec_train_and_pred = True
     if opt_exec_train_and_pred:
         StlTftExec.train(trainer, tft, train_dataloader, val_dataloader)
+
+    opt_optimize_hyperparameters = False
+    if opt_optimize_hyperparameters:
         study = StlTftExec.turn_hyperparameters(train_dataloader, val_dataloader, n_trials=2, max_epochs=2)
         print(study)
 
-        preds, index = StlTftExec.predict(tft, val_dataloader)
-        print(preds)
-        print(index)
+    preds, index = StlTftExec.predict(tft, val_dataloader)
+    print(preds)
+    print(index)
 
 
 if __name__ == '__main__':
