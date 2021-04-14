@@ -65,7 +65,7 @@ class StlTftExec(object):
         if cls.log_dir is None:
             file_dir = os.path.dirname(__file__)
             app_dir = os.path.dirname(file_dir)
-            cls.log_dir = app_dir + "/lightning_logs"
+            cls.log_dir = app_dir + "/runs"
             if not os.path.isdir(cls.log_dir):
                 os.makedirs(cls.log_dir, exist_ok=True)
             print("**tb_log_dir location:", cls.log_dir)
